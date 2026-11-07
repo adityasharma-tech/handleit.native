@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Outer area and existing rounded white sheet -->
+    <color name="black">#000000</color>
+    <color name="surface_background">#0B0B0F</color>
+    <color name="white">#FFFFFF</color>
+
+    <!-- Light content surfaces: visibly separated from the white sheet -->
+    <color name="card_surface">#F7F5FA</color>
+    <color name="card_hero">#F2EBFF</color>
+    <color name="card_stroke">#338B5CF6</color>
+
+    <!-- Typography for the light content area -->
+    <color name="text_primary">#211B2B</color>
+    <color name="text_secondary">#686273</color>
+    <color name="text_muted">#898493</color>
+    <color name="divider">#245B21B6</color>
+
+    <!-- Purple accent -->
+    <color name="purple">#7C3AED</color>
+    <color name="purple_light">#7C3AED</color>
+    <color name="purple_deep">#5B21B6</color>
+    <color name="purple_glow">#338B5CF6</color>
+
+    <!-- Status colors -->
+    <color name="status_green">#15803D</color>
+    <color name="status_green_bg">#1F22C55E</color>
+    <color name="status_amber">#B45309</color>
+    <color name="amber">#B45309</color>
+    <color name="permission_stroke">#66F59E0B</color>
+    <color name="status_red">#DC2626</color>
+    <color name="inactive_gray">#77717F</color>
+    <color name="inactive_bg">#1F77717F</color>
+
+    <!-- Material switch -->
+    <color name="switch_thumb">#FFFFFFFF</color>
+    <color name="switch_track">#997C3AED</color>
+</resources>
