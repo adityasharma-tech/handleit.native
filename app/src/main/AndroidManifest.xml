@@ -35,6 +35,12 @@
             android:exported="false"
             android:theme="@style/Theme.CallGuard"
             android:windowSoftInputMode="adjustResize" />
+        <service android:exported="false" android:name=".CallScreeningService"
+            android:permission="android.permission.BIND_SCREENING_SERVICE">
+            <intent-filter>
+                <action android:name="android.telecom.CallScreeningService"/>
+            </intent-filter>
+        </service>
     </application>
 
 </manifest>

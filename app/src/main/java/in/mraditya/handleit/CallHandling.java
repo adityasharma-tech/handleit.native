@@ -1,11 +1,13 @@
 package in.mraditya.handleit;
 
 import android.Manifest;
+import android.app.role.RoleManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -39,6 +41,8 @@ public class CallHandling extends AppCompatActivity {
 
     private static final String PHONE_PERMISSION = Manifest.permission.CALL_PHONE;
     private static final String STATE_PERMISSION = Manifest.permission.READ_PHONE_STATE;
+    private static final int REQUEST_CALL_SCREENING_ROLE = 102;
+    private static final String PREF_CALL_SCREENING_REQUESTED = "call_screening_requested";
 
     private ForwardingState forwardingState;
     private MaterialSwitch switchForwarding;
@@ -46,8 +50,10 @@ public class CallHandling extends AppCompatActivity {
     private TextView tvStatus;
     private MaterialCardView cardPermPhone;
     private MaterialCardView cardPermState;
+    private MaterialCardView cardPermCallScreening;
     private MaterialButton btnGrantPhone;
     private MaterialButton btnGrantState;
+    private MaterialButton btnGrantCallScreening;
     private ProgressBar progress;
 
     private boolean isEnabled = false;
@@ -55,6 +61,7 @@ public class CallHandling extends AppCompatActivity {
     private boolean updatingSwitch = false;
     private boolean hasRequestedPhone = false;
     private boolean hasRequestedState = false;
+    private boolean hasRequestedCallScreening = false;
 
     interface UssdResult { void done(boolean ok, String text); }
 
@@ -71,6 +78,9 @@ public class CallHandling extends AppCompatActivity {
             hasRequestedState = savedInstanceState.getBoolean("requested_state");
         }
 
+        hasRequestedCallScreening = getSharedPreferences(MainActivity.class.getSimpleName(), MODE_PRIVATE)
+                .getBoolean(PREF_CALL_SCREENING_REQUESTED, false);
+
         initializeViews();
         initializePermissionLaunchers();
         initializeListeners();
@@ -83,8 +93,10 @@ public class CallHandling extends AppCompatActivity {
         tvStatus = findViewById(R.id.tvStatus);
         cardPermPhone = findViewById(R.id.cardPermPhone);
         cardPermState = findViewById(R.id.cardPermState);
+        cardPermCallScreening = findViewById(R.id.cardPermCallScreening);
         btnGrantPhone = findViewById(R.id.btnGrantPhone);
         btnGrantState = findViewById(R.id.btnGrantState);
+        btnGrantCallScreening = findViewById(R.id.btnGrantCallScreening);
         progress = findViewById(R.id.progress);
     }
 
@@ -113,6 +125,7 @@ public class CallHandling extends AppCompatActivity {
     }
 
     private void initializeListeners() {
+        btnGrantCallScreening.setOnClickListener(view -> requestCallScreeningRole());
         switchForwarding.setOnCheckedChangeListener((buttonView, checked) -> {
             if (updatingSwitch || isLoading) {
                 return;
@@ -368,6 +381,22 @@ public class CallHandling extends AppCompatActivity {
                 hasRequestedState && !shouldShowRequestPermissionRationale(STATE_PERMISSION)
         );
 
+        boolean callScreeningMissing = false;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            RoleManager roleManager = (RoleManager) getSystemService(ROLE_SERVICE);
+            callScreeningMissing = roleManager != null
+                    && roleManager.isRoleAvailable(RoleManager.ROLE_CALL_SCREENING)
+                    && !roleManager.isRoleHeld(RoleManager.ROLE_CALL_SCREENING);
+        }
+        cardPermCallScreening.setVisibility(callScreeningMissing ? View.VISIBLE : View.GONE);
+        btnGrantCallScreening.setText(hasRequestedCallScreening ? "Open settings" : "Grant");
+
+        if (!callScreeningMissing) {
+            hasRequestedCallScreening = false;
+            getSharedPreferences(MainActivity.class.getSimpleName(), MODE_PRIVATE)
+                    .edit().remove(PREF_CALL_SCREENING_REQUESTED).apply();
+        }
+
         if (phoneMissing || stateMissing) {
             tvStatus.setText("Permission required");
             switchForwarding.setEnabled(true);
@@ -395,6 +424,43 @@ public class CallHandling extends AppCompatActivity {
         } else {
             card.setVisibility(View.GONE);
         }
+    }
+
+    private void requestCallScreeningRole() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            refreshPermissionCards();
+            return;
+        }
+
+        RoleManager roleManager = (RoleManager) getSystemService(ROLE_SERVICE);
+        if (roleManager == null || !roleManager.isRoleAvailable(RoleManager.ROLE_CALL_SCREENING)) {
+            refreshPermissionCards();
+            return;
+        }
+
+        if (roleManager.isRoleHeld(RoleManager.ROLE_CALL_SCREENING)) {
+            hasRequestedCallScreening = false;
+            getSharedPreferences(MainActivity.class.getSimpleName(), MODE_PRIVATE)
+                    .edit().remove(PREF_CALL_SCREENING_REQUESTED).apply();
+            refreshPermissionCards();
+            return;
+        }
+
+        if (hasRequestedCallScreening) {
+            openCallScreeningSettings();
+            return;
+        }
+
+        hasRequestedCallScreening = true;
+        getSharedPreferences(MainActivity.class.getSimpleName(), MODE_PRIVATE)
+                .edit().putBoolean(PREF_CALL_SCREENING_REQUESTED, true).apply();
+
+        Intent intent = roleManager.createRequestRoleIntent(RoleManager.ROLE_CALL_SCREENING);
+        startActivityForResult(intent, REQUEST_CALL_SCREENING_ROLE);
+    }
+
+    private void openCallScreeningSettings() {
+        startActivity(new Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS));
     }
 
     private void openAppSettings() {
@@ -452,10 +518,25 @@ public class CallHandling extends AppCompatActivity {
 
 
     @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_CALL_SCREENING_ROLE) {
+            RoleManager roleManager = (RoleManager) getSystemService(ROLE_SERVICE);
+            if (roleManager != null && roleManager.isRoleHeld(RoleManager.ROLE_CALL_SCREENING)) {
+                hasRequestedCallScreening = false;
+                getSharedPreferences(MainActivity.class.getSimpleName(), MODE_PRIVATE)
+                        .edit().remove(PREF_CALL_SCREENING_REQUESTED).apply();
+            }
+            refreshPermissionCards();
+        }
+    }
+
+    @Override
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         outState.putBoolean("requested_phone", hasRequestedPhone);
         outState.putBoolean("requested_state", hasRequestedState);
         super.onSaveInstanceState(outState);
     }
 }
+
 

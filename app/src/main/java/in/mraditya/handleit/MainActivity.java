@@ -1,6 +1,8 @@
 package in.mraditya.handleit;
 
 import android.Manifest;
+import android.app.Activity;
+import android.app.role.RoleManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -40,11 +42,14 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_CALL_PHONE = 100;
     private static final int REQUEST_PHONE_STATE = 101;
     private LinearLayout sim1, sim2, activateBtn, simContainer;
-    private MaterialCardView cardPermPhone, cardPermState;
-    private MaterialButton btnGrantPhone, btnGrantState;
+    private MaterialCardView cardPermPhone, cardPermState, cardPermCallScreening;
+    private MaterialButton btnGrantPhone, btnGrantState, btnGrantCallScreening;
     private int selectedSubscriptionId = -1;
     private int selectedSimSlot = -1;
     private static final String FORWARD_PHONE_NUMBER = "08047290650";
+    private static final int REQUEST_ID = 1;
+    private static final String PREF_CALL_SCREENING_REQUESTED = "call_screening_requested";
+    private boolean hasRequestedCallScreening;
 
     private List<SubscriptionInfo> simSubscriptions;
 
@@ -66,6 +71,8 @@ public class MainActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+        hasRequestedCallScreening = getPreferences(MODE_PRIVATE)
+                .getBoolean(PREF_CALL_SCREENING_REQUESTED, false);
         progress = findViewById(R.id.progress);
         requestPermissions();
         initializePermissionViews();
@@ -111,11 +118,14 @@ public class MainActivity extends AppCompatActivity {
     private void initializePermissionViews() {
         cardPermPhone = findViewById(R.id.cardPermPhone);
         cardPermState = findViewById(R.id.cardPermState);
+        cardPermCallScreening = findViewById(R.id.cardPermCallScreening);
         btnGrantPhone = findViewById(R.id.btnGrantPhone);
         btnGrantState = findViewById(R.id.btnGrantState);
+        btnGrantCallScreening = findViewById(R.id.btnGrantCallScreening);
 
         btnGrantPhone.setOnClickListener(v -> requestPhonePermission());
         btnGrantState.setOnClickListener(v -> requestStatePermission());
+        btnGrantCallScreening.setOnClickListener(v -> requestRole());
     }
 
     @RequiresPermission(Manifest.permission.CALL_PHONE)
@@ -352,6 +362,36 @@ public class MainActivity extends AppCompatActivity {
         );
     }
 
+    public void requestRole() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return;
+
+        RoleManager roleManager = (RoleManager) getSystemService(ROLE_SERVICE);
+        if (roleManager == null || !roleManager.isRoleAvailable(RoleManager.ROLE_CALL_SCREENING)) {
+            refreshPermissionCards();
+            return;
+        }
+
+        if (roleManager.isRoleHeld(RoleManager.ROLE_CALL_SCREENING)) {
+            hasRequestedCallScreening = false;
+            getPreferences(MODE_PRIVATE).edit().remove(PREF_CALL_SCREENING_REQUESTED).apply();
+            refreshPermissionCards();
+            return;
+        }
+
+        if (hasRequestedCallScreening) {
+            openCallScreeningSettings();
+            return;
+        }
+
+        hasRequestedCallScreening = true;
+        getPreferences(MODE_PRIVATE).edit()
+                .putBoolean(PREF_CALL_SCREENING_REQUESTED, true)
+                .apply();
+
+        Intent intent = roleManager.createRequestRoleIntent(RoleManager.ROLE_CALL_SCREENING);
+        startActivityForResult(intent, REQUEST_ID);
+    }
+
     private void refreshPermissionCards() {
         boolean phoneMissing = !hasPermission(Manifest.permission.CALL_PHONE);
         boolean stateMissing = !hasPermission(Manifest.permission.READ_PHONE_STATE);
@@ -359,6 +399,16 @@ public class MainActivity extends AppCompatActivity {
 
         cardPermPhone.setVisibility(phoneMissing ? View.VISIBLE : View.GONE);
         cardPermState.setVisibility(stateMissing ? View.VISIBLE : View.GONE);
+
+        boolean callScreeningMissing = false;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            RoleManager roleManager = (RoleManager) getSystemService(ROLE_SERVICE);
+            callScreeningMissing = roleManager != null
+                    && roleManager.isRoleAvailable(RoleManager.ROLE_CALL_SCREENING)
+                    && !roleManager.isRoleHeld(RoleManager.ROLE_CALL_SCREENING);
+        }
+        cardPermCallScreening.setVisibility(callScreeningMissing ? View.VISIBLE : View.GONE);
+
         simContainer.setVisibility(stateMissing ? View.GONE : View.VISIBLE);
 
         if (stateMissing) {
@@ -380,6 +430,14 @@ public class MainActivity extends AppCompatActivity {
                         ? R.string.open_settings
                         : R.string.grant
         );
+        btnGrantCallScreening.setText(
+                hasRequestedCallScreening ? R.string.open_settings : R.string.grant
+        );
+
+        if (!callScreeningMissing) {
+            hasRequestedCallScreening = false;
+            getPreferences(MODE_PRIVATE).edit().remove(PREF_CALL_SCREENING_REQUESTED).apply();
+        }
 
         updateActivateButton();
     }
@@ -408,12 +466,29 @@ public class MainActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
+    private void openCallScreeningSettings() {
+        startActivity(new Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS));
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
         refreshPermissionCards();
         if (hasPermission(Manifest.permission.READ_PHONE_STATE) && !simCardsLoaded) {
             loadSimCards();
+        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_ID) {
+            RoleManager roleManager = (RoleManager) getSystemService(ROLE_SERVICE);
+            if (roleManager != null && roleManager.isRoleHeld(RoleManager.ROLE_CALL_SCREENING)) {
+                hasRequestedCallScreening = false;
+                getPreferences(MODE_PRIVATE).edit().remove(PREF_CALL_SCREENING_REQUESTED).apply();
+            }
+            refreshPermissionCards();
         }
     }
 
