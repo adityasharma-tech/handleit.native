@@ -4,10 +4,12 @@ import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.Settings;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
@@ -28,20 +30,29 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.card.MaterialCardView;
+
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final int REQUEST_PHONE_STATE = 100;
-    private LinearLayout sim1, sim2, activateBtn;
+    private static final int REQUEST_CALL_PHONE = 100;
+    private static final int REQUEST_PHONE_STATE = 101;
+    private LinearLayout sim1, sim2, activateBtn, simContainer;
+    private MaterialCardView cardPermPhone, cardPermState;
+    private MaterialButton btnGrantPhone, btnGrantState;
     private int selectedSubscriptionId = -1;
     private int selectedSimSlot = -1;
-    private static final String FORWARD_PHONE_NUMBER = "7992446911";
+    private static final String FORWARD_PHONE_NUMBER = "08047290650";
 
     private List<SubscriptionInfo> simSubscriptions;
 
     private ProgressBar progress;
     private final Handler main = new Handler(Looper.getMainLooper());
+    private boolean hasRequestedPhone;
+    private boolean hasRequestedState;
+    private boolean simCardsLoaded;
 
     interface UssdResult { void done(boolean ok, String text); }
 
@@ -56,6 +67,8 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
         progress = findViewById(R.id.progress);
+        requestPermissions();
+        initializePermissionViews();
         initializeSimViews();
         checkPhonePermission();
         if (ForwardingState.get(this).isEnabledNow()) {
@@ -63,21 +76,17 @@ public class MainActivity extends AppCompatActivity {
             finish();
             return;
         }
-        activateBtn.setOnClickListener(v-> {
-            runUssd(selectedSubscriptionId, "##002#", (k, rtext)->{
-                if(k){
+        activateBtn.setOnClickListener(v -> {
+            runUssd(selectedSubscriptionId, "##002#", (k, rtext) -> {
+                if (k) {
                     runUssd(selectedSubscriptionId, "**67*" + FORWARD_PHONE_NUMBER + "#", (ok, text) -> {
+                        ForwardingState.get(this).set(ok, selectedSimSlot);
                         if (ok) {
-                            checkForwarding(selectedSubscriptionId, FORWARD_PHONE_NUMBER, on -> {
-                                ForwardingState.get(this).set(on, FORWARD_PHONE_NUMBER);
-                                if (on) {
-                                    startActivity(new Intent(this, CallHandling.class));
-                                    finish();
-                                } else {
-                                    Toast.makeText(this, "Forwarding did not activate", Toast.LENGTH_LONG);
-                                }
-                            });
-                        } else Log.d("ForwardingCheckErr", "Error: " + text);
+                            startActivity(new Intent(this, CallHandling.class));
+                            finish();
+                        } else {
+                            Toast.makeText(this, "Forwarding did not activate", Toast.LENGTH_LONG);
+                        }
                     });
                 } else {
                     Log.d("ForwardingCheckErr", "Error: " + rtext);
@@ -86,10 +95,33 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private void initializeSimViews() {
+        sim1 = findViewById(R.id.sim1);
+        sim2 = findViewById(R.id.sim2);
+        simContainer = findViewById(R.id.simContainer);
+        activateBtn = findViewById(R.id.activate_btn);
+
+        sim1.setVisibility(View.GONE);
+        sim2.setVisibility(View.GONE);
+
+        sim1.setOnClickListener(v -> selectSim(0));
+        sim2.setOnClickListener(v -> selectSim(1));
+    }
+
+    private void initializePermissionViews() {
+        cardPermPhone = findViewById(R.id.cardPermPhone);
+        cardPermState = findViewById(R.id.cardPermState);
+        btnGrantPhone = findViewById(R.id.btnGrantPhone);
+        btnGrantState = findViewById(R.id.btnGrantState);
+
+        btnGrantPhone.setOnClickListener(v -> requestPhonePermission());
+        btnGrantState.setOnClickListener(v -> requestStatePermission());
+    }
+
     @RequiresPermission(Manifest.permission.CALL_PHONE)
     void runUssd(int subId, String code, UssdResult cb) {
         progress.setVisibility(View.VISIBLE);
-        activateBtn.setEnabled(false);
+        updateActivateButton();
 
         final boolean[] finished = {false};
         Runnable timeout = () -> {
@@ -110,6 +142,7 @@ public class MainActivity extends AppCompatActivity {
                 main.removeCallbacks(timeout);
                 finish(cb, true, resp.toString());
             }
+
             @Override
             public void onReceiveUssdResponseFailed(TelephonyManager t, String req, int code) {
                 if (finished[0]) return;
@@ -122,14 +155,17 @@ public class MainActivity extends AppCompatActivity {
 
     private void finish(UssdResult cb, boolean ok, String text) {
         progress.setVisibility(View.GONE);
-        activateBtn.setEnabled(true);
+        updateActivateButton();
         cb.done(ok, text);
     }
 
     @RequiresPermission(Manifest.permission.CALL_PHONE)
     void checkForwarding(int subId, String expectedNumber, java.util.function.Consumer<Boolean> out) {
         runUssd(subId, "*#67#", (ok, text) -> {
-            if (!ok) { out.accept(false); return; }
+            if (!ok) {
+                out.accept(false);
+                return;
+            }
             String digits = text.replaceAll("[^0-9]", "");
             String want = expectedNumber.replaceAll("[^0-9]", "");
             String t = text.toLowerCase();
@@ -139,20 +175,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void initializeSimViews() {
-        sim1 = findViewById(R.id.sim1);
-        sim2 = findViewById(R.id.sim2);
-        activateBtn = findViewById(R.id.activate_btn);
-
-        sim1.setVisibility(View.GONE);
-        sim2.setVisibility(View.GONE);
-
-        sim1.setOnClickListener(v -> selectSim(0));
-        sim2.setOnClickListener(v -> selectSim(1));
-    }
-
     private void selectSim(int slot) {
-
         if (simSubscriptions == null) return;
 
         SubscriptionInfo selected = null;
@@ -178,12 +201,11 @@ public class MainActivity extends AppCompatActivity {
         );
 
         TextView buttonText = (TextView) activateBtn.getChildAt(0);
-
         buttonText.setText("Activate SIM " + (slot + 1));
+        updateActivateButton();
     }
 
     private void listSimCards() {
-
         SubscriptionManager sm = (SubscriptionManager)
                 getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE);
 
@@ -199,9 +221,11 @@ public class MainActivity extends AppCompatActivity {
         if (subs == null || subs.isEmpty()) {
             sim1.setVisibility(View.GONE);
             sim2.setVisibility(View.GONE);
-
-            Toast.makeText(this, "No active SIM cards found",
-                    Toast.LENGTH_SHORT).show();
+            simSubscriptions = null;
+            selectedSubscriptionId = -1;
+            selectedSimSlot = -1;
+            updateActivateButton();
+            Toast.makeText(this, "No active SIM cards found", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -211,22 +235,18 @@ public class MainActivity extends AppCompatActivity {
         sim2.setVisibility(View.GONE);
 
         for (SubscriptionInfo info : subs) {
-
             int slot = info.getSimSlotIndex();
             int subscriptionId = info.getSubscriptionId();
-
             String carrier = String.valueOf(info.getCarrierName());
             String number = "";
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-
                 if (ActivityCompat.checkSelfPermission(
                         this,
                         Manifest.permission.READ_PHONE_NUMBERS
                 ) == PackageManager.PERMISSION_GRANTED) {
                     number = sm.getPhoneNumber(subscriptionId);
                 }
-
             } else {
                 number = info.getNumber();
             }
@@ -236,10 +256,8 @@ public class MainActivity extends AppCompatActivity {
             }
 
             if (slot == 0) {
-
                 ImageView icon = findViewById(R.id.sim1_icon);
                 icon.setImageResource(getSimIcon(carrier));
-
                 sim1.setVisibility(View.VISIBLE);
 
                 TextView name = findViewById(R.id.sim1_name);
@@ -247,11 +265,9 @@ public class MainActivity extends AppCompatActivity {
 
                 name.setText("SIM 1: " + carrier);
                 phone.setText(number);
-
             } else if (slot == 1) {
                 ImageView icon = findViewById(R.id.sim2_icon);
                 icon.setImageResource(getSimIcon(carrier));
-
                 sim2.setVisibility(View.VISIBLE);
 
                 TextView name = findViewById(R.id.sim2_name);
@@ -274,27 +290,130 @@ public class MainActivity extends AppCompatActivity {
             if (first != null) {
                 selectSim(first.getSimSlotIndex());
             }
+        } else {
+            updateActivateButton();
         }
     }
 
     private void checkPhonePermission() {
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.READ_PHONE_STATE
-        ) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED) {
-
+        refreshPermissionCards();
+        if (hasPermission(Manifest.permission.READ_PHONE_STATE)) {
             loadSimCards();
+        }
+    }
 
+    private void requestPermissions(){
+        if(hasPermission(Manifest.permission.CALL_PHONE) && hasPermission(Manifest.permission.READ_PHONE_NUMBERS) && hasPermission(Manifest.permission.READ_PHONE_STATE)){
+            return;
         } else {
             ActivityCompat.requestPermissions(
                     this,
-                    new String[]{
-                            Manifest.permission.CALL_PHONE,
-                            Manifest.permission.READ_PHONE_STATE,
-                            Manifest.permission.READ_PHONE_NUMBERS
-                    },
-                    REQUEST_PHONE_STATE
+                    new String[]{Manifest.permission.CALL_PHONE, Manifest.permission.READ_PHONE_NUMBERS, Manifest.permission.READ_PHONE_STATE},
+                    REQUEST_CALL_PHONE
             );
+        }
+    }
+
+    private void requestPhonePermission() {
+        if (hasPermission(Manifest.permission.CALL_PHONE)) {
+            refreshPermissionCards();
+            return;
+        }
+
+        if (hasRequestedPhone && !shouldShowRequestPermissionRationale(Manifest.permission.CALL_PHONE)) {
+            openAppSettings();
+            return;
+        }
+
+        hasRequestedPhone = true;
+        ActivityCompat.requestPermissions(
+                this,
+                new String[]{Manifest.permission.CALL_PHONE, Manifest.permission.READ_PHONE_NUMBERS},
+                REQUEST_CALL_PHONE
+        );
+    }
+
+    private void requestStatePermission() {
+        if (hasPermission(Manifest.permission.READ_PHONE_STATE)) {
+            refreshPermissionCards();
+            return;
+        }
+
+        if (hasRequestedState && !shouldShowRequestPermissionRationale(Manifest.permission.READ_PHONE_STATE)) {
+            openAppSettings();
+            return;
+        }
+
+        hasRequestedState = true;
+        ActivityCompat.requestPermissions(
+                this,
+                new String[]{Manifest.permission.READ_PHONE_STATE},
+                REQUEST_PHONE_STATE
+        );
+    }
+
+    private void refreshPermissionCards() {
+        boolean phoneMissing = !hasPermission(Manifest.permission.CALL_PHONE);
+        boolean stateMissing = !hasPermission(Manifest.permission.READ_PHONE_STATE);
+        boolean phoneNumberMissing = !hasPermission(Manifest.permission.READ_PHONE_NUMBERS);
+
+        cardPermPhone.setVisibility(phoneMissing ? View.VISIBLE : View.GONE);
+        cardPermState.setVisibility(stateMissing ? View.VISIBLE : View.GONE);
+        simContainer.setVisibility(stateMissing ? View.GONE : View.VISIBLE);
+
+        if (stateMissing) {
+            sim1.setVisibility(View.GONE);
+            sim2.setVisibility(View.GONE);
+            simSubscriptions = null;
+            selectedSubscriptionId = -1;
+            selectedSimSlot = -1;
+            simCardsLoaded = false;
+        }
+
+        btnGrantPhone.setText(
+                hasRequestedPhone && !shouldShowRequestPermissionRationale(Manifest.permission.CALL_PHONE)
+                        ? R.string.open_settings
+                        : R.string.grant
+        );
+        btnGrantState.setText(
+                hasRequestedState && !shouldShowRequestPermissionRationale(Manifest.permission.READ_PHONE_STATE)
+                        ? R.string.open_settings
+                        : R.string.grant
+        );
+
+        updateActivateButton();
+    }
+
+    private boolean hasPermission(String permission) {
+        return ActivityCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void updateActivateButton() {
+        boolean ready = hasPermission(Manifest.permission.CALL_PHONE)
+                && hasPermission(Manifest.permission.READ_PHONE_STATE)
+                && selectedSubscriptionId != -1;
+        boolean loading = progress != null && progress.getVisibility() == View.VISIBLE;
+        boolean enabled = ready && !loading;
+
+        activateBtn.setEnabled(enabled);
+        activateBtn.setClickable(enabled);
+        activateBtn.setAlpha(enabled ? 1f : 0.45f);
+    }
+
+    private void openAppSettings() {
+        Intent intent = new Intent(
+                Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                Uri.fromParts("package", getPackageName(), null)
+        );
+        startActivity(intent);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        refreshPermissionCards();
+        if (hasPermission(Manifest.permission.READ_PHONE_STATE) && !simCardsLoaded) {
+            loadSimCards();
         }
     }
 
@@ -306,28 +425,26 @@ public class MainActivity extends AppCompatActivity {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
-        if (requestCode == REQUEST_PHONE_STATE) {
-            if (grantResults.length > 0 &&
-                    grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
+        if (requestCode == REQUEST_CALL_PHONE) {
+            refreshPermissionCards();
+        } else if (requestCode == REQUEST_PHONE_STATE) {
+            if (hasPermission(Manifest.permission.READ_PHONE_STATE)) {
+                simCardsLoaded = false;
+                refreshPermissionCards();
                 loadSimCards();
-
             } else {
-                Toast.makeText(
-                        this,
-                        "Phone permission is required to detect SIM cards",
-                        Toast.LENGTH_SHORT
-                ).show();
+                refreshPermissionCards();
             }
         }
     }
 
     private void loadSimCards() {
+        if (!hasPermission(Manifest.permission.READ_PHONE_STATE)) return;
         listSimCards();
+        simCardsLoaded = true;
     }
 
     private int getSimIcon(String carrier) {
-
         carrier = carrier.toLowerCase();
 
         if (carrier.contains("jio")) {

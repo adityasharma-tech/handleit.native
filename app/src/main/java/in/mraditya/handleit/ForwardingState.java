@@ -10,12 +10,12 @@ public class ForwardingState {
     private static ForwardingState instance;
     private final SharedPreferences prefs;
     private final MutableLiveData<Boolean> enabled = new MutableLiveData<>();
-    private final MutableLiveData<String> target = new MutableLiveData<>();
+    private final MutableLiveData<Integer> slot = new MutableLiveData<>();
 
     private ForwardingState(Context ctx) {
         prefs = ctx.getApplicationContext().getSharedPreferences("fwd_state", Context.MODE_PRIVATE);
         enabled.setValue(prefs.getBoolean("enabled", false));
-        target.setValue(prefs.getString("target", ""));
+        slot.setValue(prefs.getInt("slot", -1));
     }
 
     public static synchronized ForwardingState get(Context ctx) {
@@ -24,13 +24,13 @@ public class ForwardingState {
     }
 
     public LiveData<Boolean> isEnabled() { return enabled; }
-    public LiveData<String> getTarget() { return target; }
+    public LiveData<Integer> getSelectedSlot() { return slot; }
 
     public boolean isEnabledNow() { return Boolean.TRUE.equals(enabled.getValue()); }
 
-    public void set(boolean on, String number) {
-        prefs.edit().putBoolean("enabled", on).putString("target", number).apply();
+    public void set(boolean on, Integer number) {
+        prefs.edit().putBoolean("enabled", on).putInt("slot", number).apply();
         enabled.postValue(on);
-        target.postValue(number);
+        slot.postValue(number);
     }
 }

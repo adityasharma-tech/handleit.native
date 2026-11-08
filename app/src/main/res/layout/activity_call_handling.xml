@@ -1,691 +1,257 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
+<ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/black"
+    android:background="#000000"
+    android:fillViewport="true"
+    android:overScrollMode="never"
+    android:scrollbars="none"
     tools:context=".CallHandling">
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginTop="12dp"
-        android:background="@drawable/bg_top_rounded"
+        android:layout_height="wrap_content"
         android:orientation="vertical"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        android:paddingStart="24dp"
+        android:paddingTop="32dp"
+        android:paddingEnd="24dp"
+        android:paddingBottom="32dp">
 
-        <ScrollView
-            android:id="@+id/scrollContent"
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Call handling"
+            android:textColor="#FFFFFF"
+            android:textSize="27sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="Manage your call forwarding settings."
+            android:textColor="#A3A3A3"
+            android:textSize="14sp" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardStatus"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:clipToPadding="false"
-            android:fillViewport="true"
-            android:overScrollMode="never"
-            android:scrollbars="none">
+            android:layout_height="wrap_content"
+            android:layout_marginTop="30dp"
+            app:cardBackgroundColor="#111111"
+            app:cardCornerRadius="18dp"
+            app:cardElevation="0dp"
+            app:strokeColor="#292929"
+            app:strokeWidth="1dp">
 
             <LinearLayout
-                android:id="@+id/contentContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:paddingStart="20dp"
-                android:paddingEnd="20dp"
-                android:paddingTop="24dp"
-                android:paddingBottom="16dp">
-
+                android:padding="20dp">
 
                 <LinearLayout
-                    android:id="@+id/header"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
-                    <FrameLayout
-                        android:layout_width="46dp"
-                        android:layout_height="46dp"
-                        android:background="@drawable/bg_icon_badge">
-
-                        <ImageView
-                            android:layout_width="25dp"
-                            android:layout_height="25dp"
-                            android:layout_gravity="center"
-                            android:contentDescription="@string/cd_app_logo"
-                            android:src="@drawable/ic_phone_forward"
-                            app:tint="@color/purple_light" />
-
-                    </FrameLayout>
-
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="13dp"
                         android:layout_weight="1"
                         android:orientation="vertical">
 
                         <TextView
-                            android:id="@+id/tvAppName"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:letterSpacing="0.06"
-                            android:text="@string/app_name"
-                            android:textColor="@color/text_primary"
-                            android:textSize="20sp"
+                            android:letterSpacing="0.08"
+                            android:text="CALL FORWARDING"
+                            android:textColor="#A3A3A3"
+                            android:textSize="11sp"
                             android:textStyle="bold" />
 
                         <TextView
+                            android:id="@+id/tvStatus"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="3dp"
-                            android:text="@string/header_subtitle"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="12sp" />
+                            android:layout_marginTop="9dp"
+                            android:text="Checking..."
+                            android:textColor="#FFFFFF"
+                            android:textSize="28sp"
+                            android:textStyle="bold" />
 
                     </LinearLayout>
+
+                    <ProgressBar
+                        android:id="@+id/progress"
+                        style="?android:attr/progressBarStyleSmall"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:indeterminate="true"
+                        android:indeterminateTint="#A78BFA"
+                        android:visibility="gone" />
 
                 </LinearLayout>
 
-                <!-- Permission cards -->
-
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/cardPermPhone"
+                <View
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="22dp"
-                    android:visibility="gone"
-                    app:cardBackgroundColor="@color/card_surface"
-                    app:cardCornerRadius="18dp"
-                    app:cardElevation="0dp"
-                    app:strokeColor="@color/permission_stroke"
-                    app:strokeWidth="1dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:padding="16dp">
-
-                        <ImageView
-                            android:layout_width="26dp"
-                            android:layout_height="26dp"
-                            android:contentDescription="@string/cd_phone_permission"
-                            android:src="@drawable/ic_phone"
-                            app:tint="@color/amber" />
-
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="12dp"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="@string/phone_permission_title"
-                                android:textColor="@color/text_primary"
-                                android:textSize="14sp"
-                                android:textStyle="bold" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="4dp"
-                                android:text="@string/phone_permission_description"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="12sp" />
-
-                        </LinearLayout>
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnGrantPhone"
-                            android:layout_width="wrap_content"
-                            android:layout_height="48dp"
-                            android:layout_marginStart="8dp"
-                            android:minWidth="76dp"
-                            android:text="@string/grant"
-                            android:textSize="12sp"
-                            app:backgroundTint="@color/purple"
-                            app:cornerRadius="12dp"
-                            android:insetBottom="0dp" />
-
-                    </LinearLayout>
-
-                </com.google.android.material.card.MaterialCardView>
-
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/cardPermState"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:visibility="gone"
-                    app:cardBackgroundColor="@color/card_surface"
-                    app:cardCornerRadius="18dp"
-                    app:cardElevation="0dp"
-                    app:strokeColor="@color/permission_stroke"
-                    app:strokeWidth="1dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:padding="16dp">
-
-                        <ImageView
-                            android:layout_width="26dp"
-                            android:layout_height="26dp"
-                            android:contentDescription="@string/cd_state_permission"
-                            android:src="@drawable/ic_shield"
-                            app:tint="@color/amber" />
-
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="12dp"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="@string/state_permission_title"
-                                android:textColor="@color/text_primary"
-                                android:textSize="14sp"
-                                android:textStyle="bold" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="4dp"
-                                android:text="@string/state_permission_description"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="12sp" />
-
-                        </LinearLayout>
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnGrantState"
-                            android:layout_width="wrap_content"
-                            android:layout_height="48dp"
-                            android:layout_marginStart="8dp"
-                            android:minWidth="76dp"
-                            android:text="@string/grant"
-                            android:textSize="12sp"
-                            app:backgroundTint="@color/purple"
-                            app:cornerRadius="12dp"
-                            android:insetBottom="0dp" />
-
-                    </LinearLayout>
-
-                </com.google.android.material.card.MaterialCardView>
-
-                <!-- Hero status card -->
-
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/cardHero"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="22dp"
-                    app:cardBackgroundColor="@color/card_hero"
-                    app:cardCornerRadius="24dp"
-                    app:cardElevation="0dp"
-                    app:strokeColor="@color/card_stroke"
-                    app:strokeWidth="1dp">
-
-                    <FrameLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content">
-
-                        <View
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:background="@drawable/bg_hero_gradient" />
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:padding="20dp">
-
-                            <FrameLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content">
-
-                                <ProgressBar
-                                    android:id="@+id/progress"
-                                    style="?android:attr/progressBarStyle"
-                                    android:layout_width="28dp"
-                                    android:layout_height="28dp"
-                                    android:layout_gravity="end|top"
-                                    android:indeterminate="true"
-                                    android:indeterminateTint="@color/purple_light"
-                                    android:visibility="gone" />
-
-                            </FrameLayout>
-
-                            <!-- Icon and pulse -->
-
-                            <FrameLayout
-                                android:layout_width="112dp"
-                                android:layout_height="112dp"
-                                android:layout_gravity="center_horizontal"
-                                android:contentDescription="@string/cd_forwarding_status">
-
-                                <View
-                                    android:id="@+id/pulseRing"
-                                    android:layout_width="112dp"
-                                    android:layout_height="112dp"
-                                    android:background="@drawable/bg_pulse_ring"
-                                    android:visibility="gone" />
-
-                                <FrameLayout
-                                    android:id="@+id/iconCircle"
-                                    android:layout_width="82dp"
-                                    android:layout_height="82dp"
-                                    android:layout_gravity="center"
-                                    android:background="@drawable/bg_status_icon">
-
-                                    <ImageView
-                                        android:id="@+id/ivStatusIcon"
-                                        android:layout_width="38dp"
-                                        android:layout_height="38dp"
-                                        android:layout_gravity="center"
-                                        android:contentDescription="@string/cd_forwarding_status"
-                                        android:src="@drawable/ic_phone_forward"
-                                        app:tint="@color/purple_light" />
-
-                                </FrameLayout>
-
-                            </FrameLayout>
-
-                            <TextView
-                                android:id="@+id/tvStatus"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="14dp"
-                                android:gravity="center"
-                                android:text="@string/status_loading"
-                                android:textColor="@color/text_primary"
-                                android:textSize="22sp"
-                                android:textStyle="bold" />
-
-                            <TextView
-                                android:id="@+id/tvStatusChip"
-                                android:layout_width="wrap_content"
-                                android:layout_height="30dp"
-                                android:layout_gravity="center_horizontal"
-                                android:layout_marginTop="10dp"
-                                android:background="@drawable/bg_chip_inactive"
-                                android:drawablePadding="7dp"
-                                android:gravity="center"
-                                android:paddingStart="13dp"
-                                android:paddingEnd="13dp"
-                                android:text="@string/inactive"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="11sp"
-                                android:textStyle="bold" />
-
-                            <View
-                                android:layout_width="match_parent"
-                                android:layout_height="1dp"
-                                android:layout_marginTop="22dp"
-                                android:layout_marginBottom="18dp"
-                                android:background="@color/divider" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="@string/forwarding_to"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="12sp" />
-
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="7dp"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal">
-
-                                <TextView
-                                    android:id="@+id/tvTarget"
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:ellipsize="end"
-                                    android:maxLines="1"
-                                    android:text="—"
-                                    android:textColor="@color/text_primary"
-                                    android:textSize="23sp"
-                                    android:textStyle="bold"
-                                    tools:text="+91 98765 43210" />
-
-                                <ImageButton
-                                    android:id="@+id/btnCopy"
-                                    android:layout_width="48dp"
-                                    android:layout_height="48dp"
-                                    android:background="?attr/selectableItemBackgroundBorderless"
-                                    android:contentDescription="@string/cd_copy_number"
-                                    android:src="@drawable/ic_copy"
-                                    app:tint="@color/purple_light" />
-
-                            </LinearLayout>
-
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="12dp"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal">
-
-                                <ImageView
-                                    android:layout_width="17dp"
-                                    android:layout_height="17dp"
-                                    android:contentDescription="@string/cd_sim"
-                                    android:src="@drawable/ic_sim"
-                                    app:tint="@color/text_secondary" />
-
-                                <TextView
-                                    android:id="@+id/tvSim"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginStart="8dp"
-                                    android:text="@string/sim_not_available"
-                                    android:textColor="@color/text_secondary"
-                                    android:textSize="12sp" />
-
-                            </LinearLayout>
-
-                            <View
-                                android:layout_width="match_parent"
-                                android:layout_height="1dp"
-                                android:layout_marginTop="17dp"
-                                android:layout_marginBottom="12dp"
-                                android:background="@color/divider" />
-
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal">
-
-                                <LinearLayout
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:orientation="vertical">
-
-                                    <TextView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:text="@string/last_checked"
-                                        android:textColor="@color/text_muted"
-                                        android:textSize="11sp" />
-
-                                    <TextView
-                                        android:id="@+id/tvLastChecked"
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:layout_marginTop="4dp"
-                                        android:text="@string/not_checked_yet"
-                                        android:textColor="@color/text_secondary"
-                                        android:textSize="12sp" />
-
-                                </LinearLayout>
-
-                                <ImageButton
-                                    android:id="@+id/btnRefresh"
-                                    android:layout_width="48dp"
-                                    android:layout_height="48dp"
-                                    android:background="?attr/selectableItemBackgroundBorderless"
-                                    android:contentDescription="@string/cd_refresh"
-                                    android:src="@drawable/ic_refresh"
-                                    app:tint="@color/purple_light" />
-
-                            </LinearLayout>
-
-                        </LinearLayout>
-
-                    </FrameLayout>
-
-                </com.google.android.material.card.MaterialCardView>
-
-                <!-- Main control -->
-
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/cardControl"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    app:cardBackgroundColor="@color/card_surface"
-                    app:cardCornerRadius="20dp"
-                    app:cardElevation="0dp"
-                    app:strokeColor="@color/card_stroke"
-                    app:strokeWidth="1dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:paddingStart="18dp"
-                        android:paddingEnd="14dp"
-                        android:paddingTop="14dp"
-                        android:paddingBottom="14dp">
-
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="@string/call_forwarding"
-                                android:textColor="@color/text_primary"
-                                android:textSize="15sp"
-                                android:textStyle="bold" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="4dp"
-                                android:text="@string/call_forwarding_description"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="12sp" />
-
-                        </LinearLayout>
-
-                        <com.google.android.material.materialswitch.MaterialSwitch
-                            android:id="@+id/switchForwarding"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:contentDescription="@string/cd_toggle_forwarding"
-                            android:checked="true"
-                            app:thumbTint="@color/switch_thumb"
-                            app:trackTint="@color/switch_track" />
-
-                    </LinearLayout>
-
-                </com.google.android.material.card.MaterialCardView>
-
-                <!-- Quick actions -->
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="26dp"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="20dp"
                     android:layout_marginBottom="12dp"
-                    android:text="@string/quick_actions"
-                    android:textColor="@color/text_primary"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/cardTest"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    app:cardBackgroundColor="@color/card_surface"
-                    app:cardCornerRadius="18dp"
-                    app:cardElevation="0dp"
-                    app:strokeColor="@color/card_stroke"
-                    app:strokeWidth="1dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="16dp">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal">
-
-                            <ImageView
-                                android:layout_width="23dp"
-                                android:layout_height="23dp"
-                                android:contentDescription="@string/cd_test"
-                                android:src="@drawable/ic_phone_forward"
-                                app:tint="@color/purple_light" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginStart="11dp"
-                                android:text="@string/test_forwarding"
-                                android:textColor="@color/text_primary"
-                                android:textSize="14sp"
-                                android:textStyle="bold" />
-
-                        </LinearLayout>
-
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="9dp"
-                            android:lineSpacingExtra="3dp"
-                            android:text="@string/test_forwarding_description"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="12sp" />
-
-                    </LinearLayout>
-
-                </com.google.android.material.card.MaterialCardView>
-
-                <!-- How it works -->
-
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/cardHow"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    app:cardBackgroundColor="@color/card_surface"
-                    app:cardCornerRadius="18dp"
-                    app:cardElevation="0dp"
-                    app:strokeColor="@color/card_stroke"
-                    app:strokeWidth="1dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="16dp">
-
-                        <LinearLayout
-                            android:id="@+id/rowHow"
-                            android:layout_width="match_parent"
-                            android:layout_height="48dp"
-                            android:background="?attr/selectableItemBackground"
-                            android:clickable="true"
-                            android:focusable="true"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal">
-
-                            <ImageView
-                                android:layout_width="23dp"
-                                android:layout_height="23dp"
-                                android:contentDescription="@string/cd_information"
-                                android:src="@drawable/ic_info"
-                                app:tint="@color/purple_light" />
-
-                            <TextView
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_marginStart="11dp"
-                                android:layout_weight="1"
-                                android:text="@string/how_it_works"
-                                android:textColor="@color/text_primary"
-                                android:textSize="14sp"
-                                android:textStyle="bold" />
-
-                            <ImageView
-                                android:id="@+id/ivHowArrow"
-                                android:layout_width="22dp"
-                                android:layout_height="22dp"
-                                android:contentDescription="@string/cd_expand"
-                                android:src="@drawable/ic_chevron"
-                                app:tint="@color/text_secondary" />
-
-                        </LinearLayout>
-
-                        <TextView
-                            android:id="@+id/tvHowDetails"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:lineSpacingExtra="5dp"
-                            android:paddingTop="8dp"
-                            android:text="@string/how_it_works_description"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="12sp"
-                            android:visibility="gone" />
-
-                    </LinearLayout>
-
-                </com.google.android.material.card.MaterialCardView>
-
-                <!-- Footer -->
+                    android:background="#292929" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="25dp"
-                    android:gravity="center"
-                    android:orientation="vertical">
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
 
                     <TextView
-                        android:id="@+id/tvVersion"
-                        android:layout_width="wrap_content"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:text="@string/app_version"
-                        android:textColor="@color/text_muted"
-                        android:textSize="11sp" />
+                        android:layout_weight="1"
+                        android:text="Call forwarding"
+                        android:textColor="#FFFFFF"
+                        android:textSize="14sp" />
 
-                    <TextView
+                    <com.google.android.material.materialswitch.MaterialSwitch
+                        android:id="@+id/switchForwarding"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="5dp"
-                        android:drawablePadding="5dp"
-                        android:text="@string/carrier_verified_note"
-                        android:textColor="@color/text_muted"
-                        android:textSize="10sp" />
+                        android:contentDescription="Toggle call forwarding"
+                        android:checked="false"
+                        app:thumbTint="#FFFFFF"
+                        app:trackTint="#555555" />
 
                 </LinearLayout>
 
             </LinearLayout>
 
-        </ScrollView>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardPermPhone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:visibility="gone"
+            app:cardBackgroundColor="#111111"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:strokeColor="#292929"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="16dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Phone permission"
+                        android:textColor="#FFFFFF"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Required to manage call forwarding."
+                        android:textColor="#A3A3A3"
+                        android:textSize="12sp" />
+
+                </LinearLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnGrantPhone"
+                    android:layout_width="wrap_content"
+                    android:layout_height="44dp"
+                    android:layout_marginStart="12dp"
+                    android:minWidth="72dp"
+                    android:text="Grant"
+                    android:textColor="#000000"
+                    android:textSize="12sp"
+                    app:backgroundTint="#FFFFFF"
+                    app:cornerRadius="10dp" />
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardPermState"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:visibility="gone"
+            app:cardBackgroundColor="#111111"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:strokeColor="#292929"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="16dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Phone state permission"
+                        android:textColor="#FFFFFF"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Required to check forwarding status."
+                        android:textColor="#A3A3A3"
+                        android:textSize="12sp" />
+
+                </LinearLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnGrantState"
+                    android:layout_width="wrap_content"
+                    android:layout_height="44dp"
+                    android:layout_marginStart="12dp"
+                    android:minWidth="72dp"
+                    android:text="Grant"
+                    android:textColor="#000000"
+                    android:textSize="12sp"
+                    app:backgroundTint="#FFFFFF"
+                    app:cornerRadius="10dp" />
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
 
     </LinearLayout>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>
